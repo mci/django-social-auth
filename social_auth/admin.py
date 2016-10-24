@@ -16,7 +16,14 @@ if setting('SOCIAL_AUTH_MODELS') in (None, 'social_auth.db.django_models'):
         username_field = None
 
     fieldnames = ('first_name', 'last_name', 'email') + (username_field,)
-    all_names = _User._meta.get_all_field_names()
+    from itertools import chain
+    all_names = list(set(chain.from_iterable(
+        (field.name, field.attname) if hasattr(field, 'attname') else (field.name,)
+        for field in _User._meta.get_fields()
+        # For complete backwards compatibility, you may want to exclude
+        # GenericForeignKey from the results.
+        if not (field.many_to_one and field.related_model is None)
+    )))
     user_search_fields = ['user__' + name for name in fieldnames
                                 if name in all_names]
 
