@@ -9,14 +9,19 @@ except ImportError:
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.encoding import smart_unicode
+import six
 
+_JSONFieldBase = models.TextField
 
-class JSONField(models.TextField):
+class JSONField(_JSONFieldBase):
     """Simple JSON field that stores python structures as JSON strings
     on database.
     """
-    __metaclass__ = models.SubfieldBase
-
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('default', '{}')
+        super(JSONField, self).__init__(*args, **kwargs)
+    
     def to_python(self, value):
         """
         Convert the input JSON value into python structures, raises
