@@ -36,7 +36,29 @@ class JSONField(_JSONFieldBase):
                 raise ValidationError(str(e))
         else:
             return value
-
+    
+    def from_db_value(self, value, expression, connection, context):
+        """
+        Convert the input JSON value into python structures, raises
+        django.core.exceptions.ValidationError if the data can't be converted.
+        """
+        if self.blank and not value:
+            return {}
+        value = value or '{}'
+        if isinstance(value, six.binary_type):
+            value = six.text_type(value, 'utf-8')
+        if isinstance(value, six.string_types):
+            try:
+                # with django 1.6 i have '"{}"' as default value here
+                if value[0] == value[-1] == '"':
+                    value = value[1:-1]
+                
+                return json.loads(value)
+            except Exception as err:
+                raise ValidationError(str(err))
+        else:
+            return value
+    
     def validate(self, value, model_instance):
         """Check value is a valid JSON string, raise ValidationError on
         error."""
